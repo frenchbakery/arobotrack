@@ -39,7 +39,7 @@ ARUCO_DICTS = {
 class Marker:
     center: Vec2
     last_center: Vec2
-    
+
     def __init__(self, id):
         self.id = id
 
@@ -161,6 +161,7 @@ def main(args: dict[str, any]):
                 last_point = point
 
         cv2.imshow("frame", frame)
+        cv2.imshow("framebw", framebw)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
