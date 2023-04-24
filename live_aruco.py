@@ -6,6 +6,7 @@ import argparse
 import imutils
 import cv2
 import sys
+from lib.vector import Vec2
 
 
 # ArUco dictionary name to object map
@@ -33,8 +34,18 @@ ARUCO_DICTS = {
     "DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
 }
 
+#Coord = 
+
+class Marker:
+    center: Vec2
+    last_center: Vec2
+    
+    def __init__(self, id):
+        self.id = id
+
 tracked_id: int = 0
-points: list[(int, int)] = []
+points: list[Vec2] = []
+trace_length = 100
 
 
 def processDetectedMarkers(frame, corners, ids):
@@ -49,28 +60,29 @@ def processDetectedMarkers(frame, corners, ids):
             corners = markerCorner.reshape((4, 2))
             (topLeft, topRight, bottomRight, bottomLeft) = corners
             # convert each of the (x, y)-coordinate pairs to integers
-            topRight = (int(topRight[0]), int(topRight[1]))
-            bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
-            bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
-            topLeft = (int(topLeft[0]), int(topLeft[1]))
+            topRight = Vec2(int(topRight[0]), int(topRight[1]))
+            bottomRight = Vec2(int(bottomRight[0]), int(bottomRight[1]))
+            bottomLeft = Vec2(int(bottomLeft[0]), int(bottomLeft[1]))
+            topLeft = Vec2(int(topLeft[0]), int(topLeft[1]))
             # draw the bounding box of the ArUCo marker
-            cv2.line(frame, topLeft, topRight, (0, 255, 0), 2)
-            cv2.line(frame, topRight, bottomRight, (0, 255, 0), 2)
-            cv2.line(frame, bottomRight, bottomLeft, (0, 255, 0), 2)
-            cv2.line(frame, bottomLeft, topLeft, (0, 255, 0), 2)
+            cv2.line(frame, topLeft.icart, topRight.icart, (0, 255, 0), 2)
+            cv2.line(frame, topRight.icart, bottomRight.icart, (0, 255, 0), 2)
+            cv2.line(frame, bottomRight.icart, bottomLeft.icart, (0, 255, 0), 2)
+            cv2.line(frame, bottomLeft.icart, topLeft.icart, (0, 255, 0), 2)
             # compute and draw the center (x, y)-coordinates of the ArUco
             # marker
-            cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-            cY = int((topLeft[1] + bottomRight[1]) / 2.0)
-            cv2.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
+            center = Vec2.between(topLeft, bottomRight)
+            cv2.circle(frame, center.icart, 4, (0, 0, 255), -1)
 
             # save the center point so a path can be drawn
             if markerID == tracked_id:
-                points.append((cX, cY))
+                points.append(center)
+                if len(points) > trace_length:
+                    points.pop(0)
 
             # draw the ArUco marker ID on the frame
             cv2.putText(frame, str(markerID),
-                (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX,
+                (topLeft - Vec2(0, 15)).icart, cv2.FONT_HERSHEY_SIMPLEX,
                 0.5, (0, 255, 0), 2)
             print("[INFO] ArUco marker ID: {}".format(markerID))
 
@@ -130,10 +142,13 @@ def main(args: dict[str, any]):
         ret, frame = vid.read()
         if frame is None:
             continue
-        #frame = imutils.resize(frame, width=600)
+
+        #frame = imutils.resize(frame, height=900)
+
+        framebw = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         
         #detect marcers
-        (corners, ids, rejected) = aruco_detector.detectMarkers(frame)
+        (corners, ids, rejected) = aruco_detector.detectMarkers(framebw)
         
         processDetectedMarkers(frame, corners, ids)
         processRejectedMarkers(frame, rejected)
@@ -142,7 +157,7 @@ def main(args: dict[str, any]):
         if len(points) > 0:
             last_point = points[0]
             for point in points:
-                cv2.line(frame, last_point, point, (0, 127, 255), 2)
+                cv2.line(frame, last_point.icart, point.icart, (0, 127, 255), 2)
                 last_point = point
 
         cv2.imshow("frame", frame)
