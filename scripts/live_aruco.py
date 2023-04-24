@@ -33,10 +33,76 @@ ARUCO_DICTS = {
     "DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
 }
 
+tracked_id: int = 0
 points: list[(int, int)] = []
 
 
+def processDetectedMarkers(frame, corners, ids):
+    # process the results
+    if len(corners) > 0:
+        # flatten the ArUco IDs list
+        ids = ids.flatten()
+        # loop over the detected ArUCo corners
+        for (markerCorner, markerID) in zip(corners, ids):
+            # extract the marker corners (which are always returned in
+            # top-left, top-right, bottom-right, and bottom-left order)
+            corners = markerCorner.reshape((4, 2))
+            (topLeft, topRight, bottomRight, bottomLeft) = corners
+            # convert each of the (x, y)-coordinate pairs to integers
+            topRight = (int(topRight[0]), int(topRight[1]))
+            bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+            bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+            topLeft = (int(topLeft[0]), int(topLeft[1]))
+            # draw the bounding box of the ArUCo marker
+            cv2.line(frame, topLeft, topRight, (0, 255, 0), 2)
+            cv2.line(frame, topRight, bottomRight, (0, 255, 0), 2)
+            cv2.line(frame, bottomRight, bottomLeft, (0, 255, 0), 2)
+            cv2.line(frame, bottomLeft, topLeft, (0, 255, 0), 2)
+            # compute and draw the center (x, y)-coordinates of the ArUco
+            # marker
+            cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+            cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+            cv2.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
+
+            # save the center point so a path can be drawn
+            if markerID == tracked_id:
+                points.append((cX, cY))
+
+            # draw the ArUco marker ID on the frame
+            cv2.putText(frame, str(markerID),
+                (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX,
+                0.5, (0, 255, 0), 2)
+            print("[INFO] ArUco marker ID: {}".format(markerID))
+
+def processRejectedMarkers(frame, corners):
+    # process the results
+    if len(corners) > 0:
+        # loop over the detected ArUCo corners
+        for markerCorner in corners:
+            # extract the marker corners (which are always returned in
+            # top-left, top-right, bottom-right, and bottom-left order)
+            current_corners = markerCorner.reshape((4, 2))
+            (topLeft, topRight, bottomRight, bottomLeft) = current_corners
+            # convert each of the (x, y)-coordinate pairs to integers
+            topRight = (int(topRight[0]), int(topRight[1]))
+            bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+            bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+            topLeft = (int(topLeft[0]), int(topLeft[1]))
+            # draw the bounding box of the ArUCo marker
+            cv2.line(frame, topLeft, topRight, (0, 0, 255), 2)
+            cv2.line(frame, topRight, bottomRight, (0, 0, 255), 2)
+            cv2.line(frame, bottomRight, bottomLeft, (0, 0, 255), 2)
+            cv2.line(frame, bottomLeft, topLeft, (0, 0, 255), 2)
+            # compute and draw the center (x, y)-coordinates of the ArUco
+            # marker
+            cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+            cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+            cv2.circle(frame, (cX, cY), 4, (0, 255, 0), -1)
+
+
 def main(args: dict[str, any]):
+    global tracked_id
+    
     type_arg = ARUCO_DICTS.get(args["type"], None)
     if type_arg is None:
         print(
@@ -50,6 +116,7 @@ def main(args: dict[str, any]):
     path_arg: int = 0
     if args["path"] is not None:
         path_arg = int(args["path"])
+    tracked_id = path_arg
 
     # initialize the camera feed
     vid = cv2.VideoCapture(video_arg)
@@ -67,44 +134,10 @@ def main(args: dict[str, any]):
         
         #detect marcers
         (corners, ids, rejected) = aruco_detector.detectMarkers(frame)
-        cv2.aruco.drawRejectedMarkers(frame, corners)
-        """
-        # process the results
-        if len(corners) > 0:
-            # flatten the ArUco IDs list
-            ids = ids.flatten()
-            # loop over the detected ArUCo corners
-            for (markerCorner, markerID) in zip(corners, ids):
-                # extract the marker corners (which are always returned in
-                # top-left, top-right, bottom-right, and bottom-left order)
-                corners = markerCorner.reshape((4, 2))
-                (topLeft, topRight, bottomRight, bottomLeft) = corners
-                # convert each of the (x, y)-coordinate pairs to integers
-                topRight = (int(topRight[0]), int(topRight[1]))
-                bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
-                bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
-                topLeft = (int(topLeft[0]), int(topLeft[1]))
-                # draw the bounding box of the ArUCo marker
-                cv2.line(frame, topLeft, topRight, (0, 255, 0), 2)
-                cv2.line(frame, topRight, bottomRight, (0, 255, 0), 2)
-                cv2.line(frame, bottomRight, bottomLeft, (0, 255, 0), 2)
-                cv2.line(frame, bottomLeft, topLeft, (0, 255, 0), 2)
-                # compute and draw the center (x, y)-coordinates of the ArUco
-                # marker
-                cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
-                cv2.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
+        
+        processDetectedMarkers(frame, corners, ids)
+        processRejectedMarkers(frame, rejected)
 
-                # save the center point so a path can be drawn
-                if markerID == path_arg:
-                    points.append((cX, cY))
-
-                # draw the ArUco marker ID on the frame
-                cv2.putText(frame, str(markerID),
-                    (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5, (0, 255, 0), 2)
-                print("[INFO] ArUco marker ID: {}".format(markerID))
-        """
         # draw the path
         if len(points) > 0:
             last_point = points[0]
