@@ -2,7 +2,7 @@ import io
 import socket
 import struct
 import time
-import picamera
+import picamera2
 
 # Connect a client socket to my laptop's IP address and port 8000
 client_socket = socket.socket()
@@ -13,7 +13,7 @@ connection = client_socket.makefile('rwb')
 
 
 try:
-    with picamera.PiCamera() as camera:
+    with picamera2.PiCamera() as camera:
         camera.resolution = (640, 480)
         camera.framerate = 24
         time.sleep(2) # Let camera warm up
