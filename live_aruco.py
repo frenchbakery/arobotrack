@@ -6,7 +6,7 @@ import argparse
 import imutils
 import cv2
 import sys
-from lib.vector import Vec2
+from utilities.vector import Vec2
 
 
 # ArUco dictionary name to object map
