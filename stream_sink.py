@@ -24,9 +24,6 @@ try:
 
         cv2.imshow('Image', image)
 
-        # Send an integer back to the Raspberry Pi
-        connection.flush()
-
 finally:
     connection.close()
     server_socket.close()
