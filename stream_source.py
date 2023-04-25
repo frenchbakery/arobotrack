@@ -31,6 +31,8 @@ try:
 
             time.sleep(0.01)
 
+except Exception:
+    raise
 
 finally:
     connection.close()
