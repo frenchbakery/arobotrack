@@ -37,15 +37,30 @@ ARUCO_DICTS = {
 #Coord = 
 
 class Marker:
+    _unrelated_distance: int = 5
     center: Vec2
     last_center: Vec2
 
-    def __init__(self, id):
+    def __init__(self, id) -> None:
         self.id = id
+    
+    def move(self, new_center: Vec2) -> None:
+        self.last_center, self.center = self.center, new_center
+    
+    def maybe_move(self, other_position: Vec2) -> bool:
+        if self.center.distance_to(other_position) < self._unrelated_distance:
+            self.move(other_position)
+            return True
+        return False
+
+
+markers: dict[int, Marker] = []
+
 
 tracked_id: int = 0
 points: list[Vec2] = []
 trace_length = 100
+
 
 
 def processDetectedMarkers(frame, corners, ids):
@@ -79,6 +94,10 @@ def processDetectedMarkers(frame, corners, ids):
                 points.append(center)
                 if len(points) > trace_length:
                     points.pop(0)
+                
+            if markerID not in markers:
+                markers[markerID] = Marker(markerID)
+
 
             # draw the ArUco marker ID on the frame
             cv2.putText(frame, str(markerID),
