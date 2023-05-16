@@ -7,6 +7,7 @@ import imutils
 import cv2
 import sys
 from utilities.vector import Vec2
+import numpy as np
 
 
 # ArUco dictionary name to object map
@@ -112,6 +113,21 @@ def processRejectedMarkers(frame, corners):
             cv2.circle(frame, (cX, cY), 4, (0, 255, 0), -1)
 
 
+def sharpen_image(image: np.ndarray) -> np.ndarray:
+    """
+    sharpen an image (in form of a np.ndarray)
+    :param image: input image
+    :return: processed image
+    """
+    # Define the kernel for sharpening
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+
+    # Apply the kernel to the input image
+    sharpened_image = cv2.filter2D(image, -1, kernel)
+
+    return sharpened_image
+
+
 def main(args: dict[str, any]):
     global tracked_id
     
@@ -146,7 +162,10 @@ def main(args: dict[str, any]):
         #frame = imutils.resize(frame, height=900)
 
         framebw = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        
+        _, framebw = cv2.threshold(framebw, 127, 255, cv2.THRESH_BINARY)
+        #framebw = cv2.fastNlMeansDenoising(framebw, None, 30, 7, 21)
+        framebw = sharpen_image(framebw)
+
         #detect marcers
         (corners, ids, rejected) = aruco_detector.detectMarkers(framebw)
         
