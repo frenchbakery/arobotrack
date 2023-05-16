@@ -162,7 +162,7 @@ def main(args: dict[str, any]):
         #frame = imutils.resize(frame, height=900)
 
         framebw = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        _, framebw = cv2.threshold(framebw, 127, 255, cv2.THRESH_BINARY)
+        # _, framebw = cv2.threshold(framebw, 127, 255, cv2.THRESH_BINARY)
         #framebw = cv2.fastNlMeansDenoising(framebw, None, 30, 7, 21)
         framebw = sharpen_image(framebw)
 
