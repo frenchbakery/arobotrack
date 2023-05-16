@@ -6,7 +6,7 @@ import argparse
 import imutils
 import cv2
 import sys
-from utilities.vector import Vec2
+from utilities import Vec2
 import numpy as np
 
 
@@ -38,7 +38,7 @@ ARUCO_DICTS = {
 #Coord = 
 
 class Marker:
-    _unrelated_distance: int = 40
+    _unrelated_distance: int = 10
     center: Vec2
     last_center: Vec2
 
@@ -199,7 +199,7 @@ def main(args: dict[str, any]):
         #frame = imutils.resize(frame, height=900)
 
         framebw = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        _, framebw = cv2.threshold(framebw, 127, 255, cv2.THRESH_BINARY)
+        #_, framebw = cv2.threshold(framebw, 127, 255, cv2.THRESH_BINARY)
         #framebw = cv2.fastNlMeansDenoising(framebw, None, 30, 7, 21)
         framebw = sharpen_image(framebw)
 
