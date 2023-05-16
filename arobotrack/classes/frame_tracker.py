@@ -1,3 +1,4 @@
+
 #! /usr/local/bin/python3
 
 # Based on information from: https://pyframesearch.com/2020/12/21/detecting-aruco-markers-with-opencv-and-python/
@@ -6,9 +7,9 @@ import argparse
 import imutils
 import cv2
 import sys
-from arobotrack.utilities import Vec2
-from arobotrack.classes import Marker
+from utilities import Vec2
 import numpy as np
+from traceback import print_exc
 
 
 # ArUco dictionary name to object map
@@ -35,6 +36,30 @@ ARUCO_DICTS = {
     "DICT_APRILTAG_36h10": cv2.aruco.DICT_APRILTAG_36h10,
     "DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
 }
+
+#Coord = 
+
+class Marker:
+    _unrelated_distance: int = 10
+    center: Vec2
+    last_center: Vec2
+
+    def __init__(self, id) -> None:
+        self.center = Vec2(0, 0)
+        self.last_center = Vec2(0, 0)
+        self.id = id
+    
+    def move(self, new_center: Vec2) -> None:
+        self.last_center, self.center = self.center, new_center
+    
+    def maybe_move(self, other_position: Vec2) -> bool:
+        dist = self.center.distance_to(other_position)
+        if dist < self._unrelated_distance:
+            print("Distance matched", dist)
+            self.move(other_position)
+            return True
+        return False
+
 
 
 markers: dict[int, Marker] = {}
@@ -148,13 +173,18 @@ def main(args: dict[str, any]):
     global tracked_id
     
     type_arg = ARUCO_DICTS.get(args["type"], None)
-    if type_arg is None:
+    if type_arg is None:    
         print(f"[ERROR] ArUco dictionary '{args['type']}' is not supported or invalid")
         sys.exit(1)
 
-    video_arg: int = 0
-    if args["video"] is not None:
-        video_arg = int(args["video"])
+    video_arg1: int = 0
+    if args["video1"] is not None:
+        video_arg1 = int(args["video1"])
+    video_arg2: int = 0
+    if args["video2"] is not None:
+        video_arg2 = int(args["video2"])
+    print("vid1: ", video_arg1)
+    print("vid2: ", video_arg2)
 
     path_arg: int = 0
     if args["path"] is not None:
@@ -162,17 +192,46 @@ def main(args: dict[str, any]):
     tracked_id = path_arg
 
     # initialize the camera feed
-    vid = cv2.VideoCapture(video_arg)
+    vid1 = cv2.VideoCapture(video_arg1)
+    vid2 = cv2.VideoCapture(video_arg2)
     # initialize the aruco detector
     aruco_dict = cv2.aruco.getPredefinedDictionary(type_arg)
     aruco_parameters = cv2.aruco.DetectorParameters()
     aruco_detector = cv2.aruco.ArucoDetector(aruco_dict, aruco_parameters)
+    sticher = cv2.Stitcher.create()
 
     while (True):
-        # read a frame
-        ret, frame = vid.read()
-        if frame is None:
+        # read a frame from camera 1
+        ret, frame1 = vid1.read()
+        if frame1 is None:
             continue
+        # read a frame from camera 2
+        ret, frame2 = vid2.read()
+        if frame2 is None:
+            continue
+
+
+        cv2.imshow("frame1", frame1)
+        cv2.imshow("frame2", frame2)
+
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+
+        try:
+            err, output = sticher.stitch([frame1, frame2])
+
+            if err != cv2.STITCHER_OK:
+                print("stitcher error")
+                continue
+
+            cv2.imshow("stitch", output)
+
+        except Exception:
+            print_exc()
+            
+            
+
+        continue
 
         #frame = imutils.resize(frame, height=900)
 
@@ -204,16 +263,3 @@ def main(args: dict[str, any]):
     sys.exit(0)
 
 
-def get_args():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-v", "--video", required=False,
-                    help="Video ID for live tracking")
-    ap.add_argument("-p", "--path", required=False,
-                    help="ID of the marker whose path should be tracked")
-    ap.add_argument("-t", "--type", required=True,
-                    help="type (aka. dictionary) of ArUco tag to detect")
-    return vars(ap.parse_args())
-
-
-if __name__ == "__main__":
-    main(get_args())
