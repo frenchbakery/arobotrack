@@ -31,8 +31,6 @@ class Marker:
     
     def maybe_move(self, new_position: tuple[Vec2]) -> bool:
         return False
-        # match corners
-
         # create a temporary list of references to the old corners
         old_corners = [
             self.top_left,
