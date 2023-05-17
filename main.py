@@ -53,7 +53,7 @@ def main(args: dict[str, any]):
 
     # initialize the camera feed
     vid1 = cv2.VideoCapture(video_arg1)
-    vid2 = cv2.VideoCapture(video_arg2)
+    #vid2 = cv2.VideoCapture(video_arg2)
 
     while (True):
         # read a frame from camera 1
@@ -61,9 +61,9 @@ def main(args: dict[str, any]):
         if frame1 is None:
             continue
         # read a frame from camera 2
-        ret, frame2 = vid2.read()
-        if frame2 is None:
-            continue
+        #ret, frame2 = vid2.read()
+        #if frame2 is None:
+        #    continue
 
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
