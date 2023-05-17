@@ -1,2 +1,2 @@
 from .marker import Marker
-from .frame_tracker import FrameTracker, ARUCO_DICTS
+from ._aruco_detector import ArucoDetector, ARUCO_DICTS

@@ -1,1 +1,1 @@
-from .vector import Vec2
+from ._vector import Vec2

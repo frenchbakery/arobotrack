@@ -25,6 +25,7 @@ class Marker:
         self.last_center, self.center = self.center, new_center
     
     def maybe_move(self, other_position: Vec2) -> bool:
+        #return False
         dist = self.center.distance_to(other_position)
         if dist < self._unrelated_distance:
             print("Distance matched", dist)

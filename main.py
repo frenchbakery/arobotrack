@@ -6,9 +6,12 @@ import argparse
 import cv2
 import sys
 import numpy as np
-from classes.utilities import Vec2
-from classes.camera import Marker, ARUCO_DICTS
-from classes.camera import FrameTracker
+import threading as th
+from PIL import ImageTk, Image
+
+from classes.camera import ARUCO_DICTS
+from classes.camera import ArucoDetector
+from classes.ui import MainWindow
 
 
 
@@ -27,15 +30,13 @@ def sharpen_image(image: np.ndarray) -> np.ndarray:
     return sharpened_image
 
 
-def main(args: dict[str, any]):
-    global tracked_id
-    
+def main(args: dict[str, any]) -> int:
     type_arg = ARUCO_DICTS.get(args["type"], None)
     if type_arg is None:    
         print(f"[ERROR] ArUco dictionary '{args['type']}' is not supported or invalid")
         sys.exit(1)
     
-    detector = FrameTracker(type_arg)
+    detector = ArucoDetector(type_arg)
 
     video_arg1: int = 0
     if args["video1"] is not None:
@@ -46,10 +47,10 @@ def main(args: dict[str, any]):
     print("vid1: ", video_arg1)
     print("vid2: ", video_arg2)
 
-    path_arg: int = 0
-    if args["path"] is not None:
-        path_arg = int(args["path"])
-    tracked_id = path_arg
+
+    # start window thread
+    app_window = MainWindow()
+
 
     # initialize the camera feed
     vid1 = cv2.VideoCapture(video_arg1)
@@ -81,13 +82,14 @@ def main(args: dict[str, any]):
         detector.draw_markers_on_frame(frame1)
 
         cv2.imshow("frame", frame1)
-        #cv2.imshow("framebw", framebw)
+        app_window.update_video(frame1)
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        if app_window.update():
             break
+        
     
     cv2.destroyAllWindows()
-    sys.exit(0)
+    return 0
 
 
 def get_args():
@@ -96,12 +98,10 @@ def get_args():
                     help="Video ID for live tracking")
     ap.add_argument("-v2", "--video2", required=False,
                     help="Video ID for live tracking")
-    ap.add_argument("-p", "--path", required=False,
-                    help="ID of the marker whose path should be tracked")
     ap.add_argument("-t", "--type", required=True,
                     help="type (aka. dictionary) of ArUco tag to detect")
     return vars(ap.parse_args())
 
 
 if __name__ == "__main__":
-    main(get_args())
+    sys.exit(main(get_args()))

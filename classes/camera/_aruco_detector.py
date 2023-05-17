@@ -38,7 +38,7 @@ COLOR_ACCEPTED = (0, 255, 0)
 COLOR_REJECTED = (0, 0, 255)
 
 
-class FrameTracker:
+class ArucoDetector:
     def __init__(self, aruco_dict_type):
         print(type(aruco_dict_type))
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(aruco_dict_type)
@@ -77,10 +77,11 @@ class FrameTracker:
         if len(corners) > 0:
             # loop over the detected ArUCo corners
             for marker_corner in corners:
-                # extract the marker corners (which are always returned in
+                # extract the marker corners (which ar returned in
                 # top-left, top-right, bottom-right, and bottom-left order)
                 current_corners = marker_corner.reshape((4, 2))
-                (topLeft, topRight, bottomRight, bottomLeft) = current_corners
+                #(topLeft, topRight, bottomRight, bottomLeft) = current_corners
+                (topLeft, topRight,  bottomRight, bottomLeft) = current_corners
                 # convert each of the (x, y)-coordinate pairs to integers
                 top_left = Vec2(int(topLeft[0]), int(topLeft[1]))
                 top_right = Vec2(int(topRight[0]), int(topRight[1]))
@@ -109,7 +110,7 @@ class FrameTracker:
             cv2.line(frame, marker.bottom_left.icart, marker.top_left.icart, color, 2)
             cv2.circle(frame, marker.center.icart, 4, (0, 255, 0), -1)
             cv2.putText(frame, str(marker.id),
-                (marker.top_left - Vec2(0, 15)).icart, cv2.FONT_HERSHEY_SIMPLEX,
+                (marker.top_left - Vec2(15, 15)).icart, cv2.FONT_HERSHEY_SIMPLEX,
                 0.5, color, 2)
 
 
