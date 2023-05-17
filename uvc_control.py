@@ -1,5 +1,7 @@
-# Source code from GitHub Gist:
+# Original source code from GitHub Gist:
 # https://gist.github.com/3dsf/62dbe5c3636276289a719da246f6d95c
+# The code was modified to fit our needs and new software versions
+
 
 #!/usr/bin/env python3
 
@@ -11,7 +13,7 @@ import os, sys, subprocess
 import cv2
 from functools import partial
 
-cam = '/dev/video0'
+cam = '/dev/video2'
 
 # Cam can be passed as command line argument 
 if len(sys.argv) > 1:
@@ -29,18 +31,31 @@ def getCamSettings(camDevice):
 
   nLines = len(out)
   for i in range(0, nLines):
-    #Skip menu legend lines which are denoted by 4 tabs
+
+    # Skip menu legend lines which are denoted by 4 tabs
     if out[i].startswith('\t\t\t\t'):
       continue
 
+    # Skip Header lines and empty lines which don't start with spaces
+    if not out[i].startswith(' '):
+      continue
+
     a = dict()
-    setting = out[i].split(':',1)[0].split()   
+
+    # parsee the setting name, ID and datatype from the line
+    setting = out[i].split(':',1)[0].split()
+    print("setting=" + str(setting))
             # ['brightness', '0x00980900', '(int)']
-    param = out[i].split(':',1)[1].split()     
+
+    # parse parameters from the line
+    # some menu controls stuff after the parameter list in parentheses so we ignore any split results that don't contain an equal sign
+    params = [param for param in (out[i].split(':',1)[1].split()) if "=" in param]
+    print("param=" + str(params))
             # ['min=-64', 'max=64', 'step=1', 'default=0', 'value=0']
+
     # Put paramaters into a dictionary
-    for j in range(0, len(param)):
-      a.update({param[j].split('=',1)[0]: param[j].split('=',1)[1]})
+    for j in range(0, len(params)):
+      a.update({params[j].split('=',1)[0]: params[j].split('=',1)[1]})
     # Add bitName and setting type to params dictionary 
     a.update({'bitName': setting[1]})
     a.update({'type': setting[2].strip("()")})
