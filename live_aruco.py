@@ -6,8 +6,8 @@ import argparse
 import imutils
 import cv2
 import sys
-from arobotrack.utilities import Vec2
-from arobotrack.classes import Marker
+from classes.utilities import Vec2
+from classes.camera import Marker
 import numpy as np
 
 

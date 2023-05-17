@@ -6,9 +6,9 @@ import argparse
 import cv2
 import sys
 import numpy as np
-from arobotrack.utilities import Vec2
-from arobotrack.classes import Marker, ARUCO_DICTS
-from arobotrack.classes import FrameTracker
+from classes.utilities import Vec2
+from classes.camera import Marker, ARUCO_DICTS
+from classes.camera import FrameTracker
 
 
 
