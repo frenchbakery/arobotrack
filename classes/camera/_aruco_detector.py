@@ -62,14 +62,12 @@ class ArucoDetector:
                 top_right = Vec2(int(topRight[0]), int(topRight[1]))
                 bottom_left = Vec2(int(bottomLeft[0]), int(bottomLeft[1]))
                 bottom_right = Vec2(int(bottomRight[0]), int(bottomRight[1]))
-                center = Vec2.between(top_left, bottom_right)
                     
                 if marker_id not in self.markers:
                     self.markers[marker_id] = Marker(marker_id)
                 
                 current_marker = self.markers[marker_id]
-                current_marker.move(center)
-                current_marker.set_frame(top_left, top_right, bottom_left, bottom_right)
+                current_marker.move((top_left, top_right, bottom_left, bottom_right))
 
 
     def process_rejected_markers(self, frame, corners):
@@ -87,11 +85,9 @@ class ArucoDetector:
                 top_right = Vec2(int(topRight[0]), int(topRight[1]))
                 bottom_left = Vec2(int(bottomLeft[0]), int(bottomLeft[1]))
                 bottom_right = Vec2(int(bottomRight[0]), int(bottomRight[1]))
-                center = Vec2.between(top_left, bottom_right)
 
                 for _, marker in self.markers.items():
-                    if marker.maybe_move(center):
-                        marker.set_frame(top_left, top_right, bottom_left, bottom_right)
+                    if marker.maybe_move((top_left, top_right, bottom_left, bottom_right)):
                         break
     
     def detect(self, frame: np.ndarray):

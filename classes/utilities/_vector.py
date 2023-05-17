@@ -20,6 +20,13 @@ class Vec2:
 
     def __init__(self, x: float, y: float):
         self._valx, self._valy = x, y
+    
+    def assign(self, other: "Vec2"):
+        """
+        "value assignment" that is useful when wanting to modify a reference to a vec2
+        """
+        self._valx = other._valx
+        self._valy = other._valy
 
     @classmethod
     def from_cart(cls, values: tuple | list) -> "Vec2":
