@@ -1,5 +1,5 @@
-#! /usr/local/bin/python3
-
+#! /usr/local/bin/python3 
+ 
 # Based on information from: https://pyframesearch.com/2020/12/21/detecting-aruco-markers-with-opencv-and-python/
 
 import argparse
