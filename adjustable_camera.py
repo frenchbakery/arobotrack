@@ -13,7 +13,7 @@ import os, sys, subprocess
 import cv2
 from functools import partial
 
-cam = '/dev/video2'
+cam = '/dev/video0'
 
 # Cam can be passed as command line argument 
 if len(sys.argv) > 1:

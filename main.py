@@ -82,7 +82,7 @@ def main(args: dict[str, any]) -> int:
         detector.draw_markers_on_frame(frame1)
 
         cv2.imshow("frame", frame1)
-        app_window.update_video(frame1)
+        #app_window.update_video(frame1)
 
         if app_window.update():
             break

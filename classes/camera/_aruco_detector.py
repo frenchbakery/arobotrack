@@ -6,7 +6,7 @@
 import cv2
 import numpy as np
 from ..utilities import Vec2
-from .marker import Marker
+from ._marker import Marker
 
 
 # ArUco dictionary name to object map
