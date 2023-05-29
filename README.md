@@ -16,7 +16,7 @@ sudo apt install v4l-utils
 List available video devices:
 
 ```bash
-v4l-ctl --list-devices
+v4l2-ctl --list-devices
 ```
 
 Often, there are multiple logical video interfaces for a single physical device.
@@ -35,7 +35,7 @@ HP HD Camera: HP HD Camera (usb-0000:05:00.4-2):
 Show all info about a video device
 
 ```bash
-v4l-ctl --device=/dev/video0 --all
+v4l2-ctl --device=/dev/video0 --all
 ```
 
 Show List of supported controls of a device:

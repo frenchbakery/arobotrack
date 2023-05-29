@@ -32,16 +32,15 @@ def sharpen_image(image: np.ndarray) -> np.ndarray:
 
 def main(args: dict[str, any]) -> int:
     type_arg = ARUCO_DICTS.get(args["type"], None)
-    if type_arg is None:    
-        print(f"[ERROR] ArUco dictionary '{args['type']}' is not supported or invalid")
-        sys.exit(1)
+    if type_arg is None:
+        type_arg = ARUCO_DICTS["DICT_4X4_50"]
     
     detector = ArucoDetector(type_arg)
 
-    video_arg1: int = 0
+    video_arg1: int | None = None
     if args["video1"] is not None:
         video_arg1 = int(args["video1"])
-    video_arg2: int = 0
+    video_arg2: int | None = None #6
     if args["video2"] is not None:
         video_arg2 = int(args["video2"])
     print("vid1: ", video_arg1)
@@ -53,20 +52,25 @@ def main(args: dict[str, any]) -> int:
 
 
     # initialize the camera feed
-    vid1 = cv2.VideoCapture(video_arg1)
-    #vid2 = cv2.VideoCapture(video_arg2)
+    vid1 = cv2.VideoCapture(video_arg1) if video_arg1 is not None else None
+    vid2 = cv2.VideoCapture(video_arg2) if video_arg2 is not None else None
 
     while (True):
+        frame1: cv2.Mat
+        frame2: cv2.Mat
+
         # read a frame from camera 1
-        ret, frame1 = vid1.read()
-        if frame1 is None:
-            continue
+        if vid1 is not None:
+            _, frame1 = vid1.read()
+            if frame1 is None:
+                continue
         # read a frame from camera 2
-        #ret, frame2 = vid2.read()
-        #if frame2 is None:
-        #    continue
+        if vid2 is not None:
+            _, frame2 = vid2.read()
+            if frame2 is None:
+                continue
 
-
+        # exit key
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
         
@@ -81,7 +85,10 @@ def main(args: dict[str, any]) -> int:
         detector.detect(framebw)
         detector.draw_markers_on_frame(frame1)
 
-        cv2.imshow("frame", frame1)
+        if vid1 is not None:
+            cv2.imshow("Camera 1", frame1)
+        if vid2 is not None:
+            cv2.imshow("Camera 2", frame2)
         #app_window.update_video(frame1)
 
         if app_window.update():
@@ -98,7 +105,7 @@ def get_args():
                     help="Video ID for live tracking")
     ap.add_argument("-v2", "--video2", required=False,
                     help="Video ID for live tracking")
-    ap.add_argument("-t", "--type", required=True,
+    ap.add_argument("-t", "--type", required=False,
                     help="type (aka. dictionary) of ArUco tag to detect")
     return vars(ap.parse_args())
 
