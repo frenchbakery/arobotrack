@@ -6,13 +6,13 @@ import argparse
 import cv2
 import sys
 import numpy as np
-import threading as th
-from PIL import ImageTk, Image
 
-from classes.camera import ARUCO_DICTS
-from classes.camera import ArucoDetector
+from classes.camera import ArucoDetector, CameraParams, ARUCO_DICTS
 from classes.ui import MainWindow
 
+
+params_matteo = CameraParams().load("calibration/data_046d_0825/20230529_214338/params_20230529_221724.pickle")
+params_signitzer = CameraParams().load("calibration/data_046d_081b/20230529_222038/params_20230529_222038.pickle")
 
 
 def sharpen_image(image: np.ndarray) -> np.ndarray:
@@ -75,6 +75,36 @@ def main(args: dict[str, any]) -> int:
             break
         
         #frame = imutils.resize(frame, height=900)
+
+        # camera calibration according to previously recorded values
+        # for now we are assuming that camera 1 is Matteo's camera (C270) and
+        # camera 2 is Signitzer's camera (C310)
+        if vid1 is not None:
+            h1, w1 = frame1.shape[:2]
+            newmatrix1, roi1 = cv2.getOptimalNewCameraMatrix(
+                params_matteo.matrix, 
+                params_matteo.distortion,
+                (w1, h1), 0, (w1, h1)
+            )
+            frame1 = cv2.undistort(
+                frame1,
+                params_matteo.matrix,
+                params_matteo.distortion,
+                None, newmatrix1
+            )
+        if vid2 is not None:
+            h2, w2 = frame2.shape[:2]
+            newmatrix2, roi2 = cv2.getOptimalNewCameraMatrix(
+                params_signitzer.matrix, 
+                params_signitzer.distortion,
+                (w2, h2), 0, (w2, h2)
+            )
+            frame2 = cv2.undistort(
+                frame2,
+                params_signitzer.matrix,
+                params_signitzer.distortion,
+                None, newmatrix2
+            )
 
         framebw = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
         #_, framebw = cv2.threshold(framebw, 127, 255, cv2.THRESH_BINARY)

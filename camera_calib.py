@@ -1,3 +1,13 @@
+"""
+Interactive camera calibration.
+References:
+https://learnopencv.com/camera-calibration-using-opencv/
+https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
+
+"""
+
+
+
 import numpy as np
 import cv2
 import glob

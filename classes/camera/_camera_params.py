@@ -7,8 +7,8 @@ FORMAT_VERSION = 1
 
 @dataclass
 class CameraParams:
-    matrix: np.ndarray
-    distortion: np.ndarray
+    matrix: np.ndarray = None
+    distortion: np.ndarray = None
 
     def load(self, file: str) -> "CameraParams":
         """
