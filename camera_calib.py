@@ -7,7 +7,7 @@ from classes.camera import CameraParams
 
 # create output constants
 DATECODE = t.strftime("%Y%m%d_%H%M%S")
-LIVE_SAVE_PREFIX = "calibration/data_046d_0825/"
+LIVE_SAVE_PREFIX = "calibration/data_046d_081b/"
 output_folder_path: str = ""
 
 # chessboard format (x, y)
