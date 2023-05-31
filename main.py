@@ -79,6 +79,7 @@ def main(args: dict[str, any]) -> int:
         # camera calibration according to previously recorded values
         # for now we are assuming that camera 1 is Matteo's camera (C270) and
         # camera 2 is Signitzer's camera (C310)
+        """
         if vid1 is not None:
             h1, w1 = frame1.shape[:2]
             newmatrix1, roi1 = cv2.getOptimalNewCameraMatrix(
@@ -105,6 +106,7 @@ def main(args: dict[str, any]) -> int:
                 params_signitzer.distortion,
                 None, newmatrix2
             )
+        """
 
         framebw = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
         #_, framebw = cv2.threshold(framebw, 127, 255, cv2.THRESH_BINARY)
