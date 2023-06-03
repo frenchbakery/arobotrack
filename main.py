@@ -7,8 +7,9 @@ import cv2
 import sys
 import numpy as np
 
-from classes.camera import ArucoDetector, CameraParams, ARUCO_DICTS
+from classes.camera import ArucoDetector, CameraDevice,  CameraParams, ARUCO_DICTS
 from classes.ui import MainWindow
+from classes.utilities import Vec2
 
 
 params_matteo = CameraParams().load("calibration/data_046d_0825/20230529_214338/params_20230529_221724.pickle")
@@ -37,12 +38,13 @@ def main(args: dict[str, any]) -> int:
     
     detector = ArucoDetector(type_arg)
 
-    video_arg1: int | None = None
+    video_arg1: CameraDevice | None = None
     if args["video1"] is not None:
-        video_arg1 = int(args["video1"])
-    video_arg2: int | None = None #6
+        video_arg1 = CameraDevice.by_video_index(int(args["video1"]))
+    video_arg2: CameraDevice | None = None
     if args["video2"] is not None:
-        video_arg2 = int(args["video2"])
+        video_arg2 = CameraDevice.by_video_index(int(args["video2"]))
+    
     print("vid1: ", video_arg1)
     print("vid2: ", video_arg2)
 
@@ -52,8 +54,33 @@ def main(args: dict[str, any]) -> int:
 
 
     # initialize the camera feed
-    vid1 = cv2.VideoCapture(video_arg1) if video_arg1 is not None else None
-    vid2 = cv2.VideoCapture(video_arg2) if video_arg2 is not None else None
+    vid1 = video_arg1.open() if video_arg1 is not None else None
+    vid2 = video_arg2.open() if video_arg2 is not None else None
+
+    orig_corners = (
+        Vec2(100, 150),
+        Vec2(400, 20),
+        Vec2(422, 422),
+        Vec2(100, 300)
+    )
+
+
+    goal_corners = (
+        Vec2(0, 0),
+        Vec2(400, 0),
+        Vec2(400, 400),
+        Vec2(0, 400)
+    )
+
+
+
+    transform_matrix = cv2.getPerspectiveTransform(
+        np.float32([v.icart for v in orig_corners]),
+        np.float32([v.icart for v in goal_corners]),
+    )
+
+
+    print(transform_matrix)
 
     while (True):
         frame1: cv2.Mat
@@ -118,7 +145,26 @@ def main(args: dict[str, any]) -> int:
         detector.draw_markers_on_frame(frame1)
 
         if vid1 is not None:
+            warped = cv2.warpPerspective(frame1, transform_matrix, (400, 400), flags=cv2.INTER_LINEAR)
+
+            orig_point = np.array([orig_corners[0].x, orig_corners[0].y, 1])
+            print(orig_point)
+            cv2.circle(frame1, orig_point[0:2], 5, (0, 128, 255))
+
+            # Perspective transform on single coordinate mathematically:
+            # https://forum.opencv.org/t/perspective-transform-on-single-coordinate/733/5
+
+            #goal_point = np.matmul(np.linalg.inv(cv2.invert(transform_matrix)), orig_point)
+            #goal_point = goal_point*(1/goal_point[2])
+            # Transform a point: https://stackoverflow.com/questions/31147438/how-to-undo-a-perspective-transform-for-a-single-point-in-opencv
+            goal_point = cv2.perspectiveTransform(np.array([[[100, 150]]], dtype=np.float32), transform_matrix)
+            print(goal_point)
+            cv2.circle(warped, np.int32(goal_point[0][0]), 5, (0, 128, 255))
+
+
             cv2.imshow("Camera 1", frame1)
+            cv2.imshow("Warped Camera 1", warped)
+
         if vid2 is not None:
             cv2.imshow("Camera 2", frame2)
         #app_window.update_video(frame1)
