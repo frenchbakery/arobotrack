@@ -85,7 +85,7 @@ v4l2-ctl --device=/dev/video0 -c gamma=120
 v4l2-ctl --device=/dev/video0 -c white_balance_temperature=4700
 v4l2-ctl --device=/dev/video0 -c sharpness=100
 v4l2-ctl --device=/dev/video0 -c backlight_compensation=0
-v4l2-ctl --device=/dev/video0 -c focus_absolute=10e
+v4l2-ctl --device=/dev/video0 -c focus_absolute=10
 v4l2-ctl --device=/dev/video0 -c auto_exposure=1
 v4l2-ctl --device=/dev/video0 -c focus_auto=0
 ```
