@@ -1,5 +1,8 @@
 # Calibration
 
+You can run the script camera_calib.py to take calibration images with the chessboard and generate the calibration parameters. when doing so, make sure to adjust the camera index and output folders in the script beforehand.
+
+**Important: If the calibration images created by the calibration script show any people, don't ever commit them!!**
 
 ## Structure
 
