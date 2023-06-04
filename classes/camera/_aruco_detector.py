@@ -105,6 +105,8 @@ class ArucoDetector:
     def draw_markers_on_frame(self, frame: np.ndarray):
         color = COLOR_ACCEPTED
 
+        # https://docs.opencv.org/3.4/d5/dae/tutorial_aruco_detection.html
+        # https://stackoverflow.com/questions/46380040/opencv-aruco-estimateposesinglemarkers-python
         rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
             self._last_corners, 
             0.053, 
