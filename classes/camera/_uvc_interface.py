@@ -143,6 +143,14 @@ class UVCInterface:
             
             # save the control
             self._controls[new_control.name] = new_control
+        
+    def set_to_defaults(self):
+        """
+        Sets all the UVC Parameters back to their default settings
+        """
+        for control in self._controls.values():
+            self._write_control(control, default=True)
+
     
     def _write_control(self, control: UVCControl, default: bool = False):
         """
@@ -159,6 +167,7 @@ class UVCInterface:
 
         match errcode := v4l_process.wait():
             case 0:
+                control.value = value   # in case default was written, store it as the new value
                 return
             case 1:
                 raise RuntimeError(f"v4l2-ctl: '{control.name}' is not a valid UVC control for camera '{self._device_path}'")

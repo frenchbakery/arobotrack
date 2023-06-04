@@ -13,9 +13,10 @@ class CameraDevice:
 
     available_cameras: list["CameraDevice"] = []
 
-    def __init__(self, video_index: int, display_name: str = "Camera"):
+    def __init__(self, video_index: int, display_name: str, sub_id: int):
         self.video_index: int = video_index
         self.display_name: str = display_name
+        self.device_sub_id: int = sub_id
         self._udev_parameters: dict[str, str] = {}
 
         # read udev parameters to get serial number and other info
@@ -42,6 +43,15 @@ class CameraDevice:
         if "ID_MODEL_ID" not in self._udev_parameters:
             raise ValueError(f"Model id of camera {self.video_index} could not be detected.")
         return self._udev_parameters["ID_MODEL_ID"]
+    
+    @property
+    def identifier(self) -> str:
+        """
+        A string that combines serial number, vendor id, model id and device sub id
+        to create a hopefully rather unique identifier for a single camera device,
+        regardless of video index
+        """
+        return self.vendor_id + "_" + self.model_id + "_" + self.serial_number + "_" + self.device_sub_id
 
     def _get_udev_parameters(self):
         """
@@ -129,13 +139,17 @@ class CameraDevice:
         output_lines: list[str] = stdout.decode('UTF-8').splitlines()
         # variable that is set whenever a name line is encountered
         current_name: str = None
+        # counter for sub-devices of a single physical device. This information
+        # is used to identify multiple logical camera devices that belong to the same physical device
+        device_sub_id: int = 0
 
         output_line: str
         for output_line in output_lines:
 
-            # lines that start with some name indicate a new physical device. store name
+            # lines that start with some name indicate a new physical device. store name and reset sub id
             if not output_line.startswith(" ") and ":" in output_line:
                 current_name = output_line.split(":")[0]
+                device_sub_id = 0
                 continue
 
             # remove leading spaces
@@ -152,8 +166,11 @@ class CameraDevice:
             # create camera device instance and save it
             cls.available_cameras.append(CameraDevice(
                 int(output_line.removeprefix("/dev/video")),
-                current_name
+                current_name,
+                device_sub_id
             ))
+            # increment sub id for next device
+            device_sub_id += 1
         
         return cls.available_cameras
     
@@ -161,7 +178,7 @@ class CameraDevice:
     def by_serial_number(cls, serial_nr: str, update: bool = False) -> "CameraDevice":
         """
         Returns the first available CameraDevice matching a serial number.
-        Raises IndexError if not found.
+        Raises RuntimeError if not found.
 
         Set update to true to update available cameras before searching.
         """
@@ -173,13 +190,31 @@ class CameraDevice:
             if cam.serial_number == serial_nr:
                 return cam
         
-        raise IndexError(f"No camera with serial number {serial_nr} available.")
+        raise RuntimeError(f"No camera with serial number {serial_nr} available.")
+    
+    @classmethod
+    def by_identifier(cls, identifier: str, update: bool = False) -> "CameraDevice":
+        """
+        Returns the first available CameraDevice matching a serial number.
+        Raises RuntimeError if not found.
+
+        Set update to true to update available cameras before searching.
+        """
+
+        if update:
+            cls.update_available_cameras()
+
+        for cam in cls.available_cameras:
+            if cam.identifier == identifier:
+                return cam
+        
+        raise RuntimeError(f"No camera with identifier {identifier} available.")
 
     @classmethod
     def by_video_index(cls, video_index: int, update: bool = False) -> "CameraDevice":
         """
         Returns the CameraDevice with the video index if available.
-        Raises IndexError if not found.
+        Raises RuntimeError if not found.
 
         Set update to true to update available cameras before searching.
         """
@@ -191,7 +226,7 @@ class CameraDevice:
             if cam.video_index == video_index:
                 return cam
         
-        raise IndexError(f"No camera with video index {video_index} available.")
+        raise RuntimeError(f"No camera with video index {video_index} available.")
 
 
 # update global list of available devices when loaded

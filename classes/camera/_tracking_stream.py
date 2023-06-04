@@ -13,6 +13,7 @@ https://stackoverflow.com/questions/31147438/how-to-undo-a-perspective-transform
 import cv2
 import numpy as np
 from ._camera_device import CameraDevice
+from ._camera_params import CameraParams
 from ._aruco_detector import ArucoDetector, ARUCO_DICTS
 from ._sharpen import sharpen_image
 
@@ -29,15 +30,19 @@ class TrackingStream:
     the specified source camera is disconnected/connected (TBD).
     """
 
-    def __init__(self, source: CameraDevice, aruco_dict: int = ARUCO_DICTS["DICT_4X4_50"]):
+    def __init__(self, source: CameraDevice, camera_params: CameraParams, aruco_dict: int = ARUCO_DICTS["DICT_4X4_50"]):
         self._source_device = source
         self._aruco_dict = aruco_dict
+        self._camera_params = camera_params
         self._input_stream = self._source_device.open()
         self._input_shape = (
             int(self._input_stream.get(cv2.CAP_PROP_FRAME_WIDTH)),
             int(self._input_stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
         )
-        self._detector = ArucoDetector(self._aruco_dict)
+        self._detector = ArucoDetector(
+            self._aruco_dict,
+            self._camera_params
+        )
 
         # the output frame is stored, so in case the camera disconnects, the old frame can be shown for the time being
         self._output_frame: cv2.Mat = np.zeros(TRACKER_OUTPUT_SHAPE)
@@ -92,6 +97,19 @@ class TrackingStream:
         if frame_raw is None:
             return self._output_frame
         
+        # correct for distortion (making things worse currently)
+        # new_matrix, _ = cv2.getOptimalNewCameraMatrix(
+        #     self._camera_params.matrix, 
+        #     self._camera_params.distortion,
+        #     self._input_shape, 1, self._input_shape
+        # )
+        # frame_raw = cv2.undistort(
+        #     frame_raw,
+        #     self._camera_params.matrix,
+        #     self._camera_params.distortion,
+        #     None, new_matrix
+        # )
+        
         # image preprocessing
         frame_bw = cv2.cvtColor(frame_raw, cv2.COLOR_BGR2GRAY)
         frame_bw = sharpen_image(frame_bw)
@@ -108,8 +126,8 @@ class TrackingStream:
             flags=cv2.INTER_LINEAR
         )
 
-        # show direct camera image with overlays
-        cv2.imshow(self._source_device.display_name, frame_raw)
+        # show direct camera image with overlays for debugging
+        cv2.imshow(self._source_device.display_name + f" ({self._source_device.video_index})", frame_raw)
 
         return self._output_frame
         

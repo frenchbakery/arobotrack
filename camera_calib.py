@@ -17,8 +17,10 @@ from classes.camera import CameraParams
 
 # create output constants
 DATECODE = t.strftime("%Y%m%d_%H%M%S")
-LIVE_SAVE_PREFIX = "calibration/data_046d_081b/"
+LIVE_SAVE_PREFIX = "calibration/data_0408_5343/"
 output_folder_path: str = ""
+
+camera_index = 0    # only used in live mode
 
 # chessboard format (x, y)
 CHESSBOARD = (6, 7)
@@ -108,7 +110,7 @@ if __name__ == "__main__":
         output_folder_path = LIVE_SAVE_PREFIX + DATECODE + "/"
         os.makedirs(output_folder_path, exist_ok=True)
         # setup the video capture for interactive input
-        vidcap = cv2.VideoCapture(4)
+        vidcap = cv2.VideoCapture(camera_index)
         while True:
             _, img = vidcap.read()
             if img is None:

@@ -14,6 +14,7 @@ from classes.utilities import Vec2
 
 params_matteo = CameraParams().load("calibration/data_046d_0825/20230529_214338/params_20230529_221724.pickle")
 params_signitzer = CameraParams().load("calibration/data_046d_081b/20230529_222038/params_20230529_222038.pickle")
+params_laptop_matteo = CameraParams().load("calibration/data_0408_5343/20230604_215358/params_20230604_215358.pickle")
 
 
 def sharpen_image(image: np.ndarray) -> np.ndarray:
@@ -36,8 +37,6 @@ def main(args: dict[str, any]) -> int:
     if type_arg is None:
         type_arg = ARUCO_DICTS["DICT_4X4_50"]
     
-    detector = ArucoDetector(type_arg)
-
     video_arg1: CameraDevice | None = None
     if args["video1"] is not None:
         video_arg1 = CameraDevice.by_video_index(int(args["video1"]))
@@ -52,7 +51,7 @@ def main(args: dict[str, any]) -> int:
     # start window thread
     app_window = MainWindow()
 
-    stream1 = TrackingStream(video_arg1)
+    stream1 = TrackingStream(video_arg1, camera_params=params_laptop_matteo)
     stream1._configure_source_area(np.float32(
         [
             [468, 392],
@@ -147,7 +146,7 @@ def main(args: dict[str, any]) -> int:
 
         frame1 = stream1.update()
         #frame2 = stream2.update()
-        both = np.concatenate((frame1, frame2), axis=1)
+        #both = np.concatenate((frame1, frame2), axis=1)
         cv2.imshow("Camera 1", frame1)
         #cv2.imshow("Camera 2", frame2)
         #cv2.imshow("Both", both)

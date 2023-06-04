@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from ..utilities import Vec2
 from ._marker import Marker
+from ._camera_params import CameraParams
 
 
 # ArUco dictionary name to object map
@@ -39,19 +40,20 @@ COLOR_REJECTED = (0, 0, 255)
 
 
 class ArucoDetector:
-    def __init__(self, aruco_dict_type):
-        print(type(aruco_dict_type))
-        self.aruco_dict = cv2.aruco.getPredefinedDictionary(aruco_dict_type)
-        self.aruco_parameters = cv2.aruco.DetectorParameters()
-        self.aruco_detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.aruco_parameters)
+    def __init__(self, aruco_dict_type, camera_params: CameraParams):
+        self._aruco_dict = cv2.aruco.getPredefinedDictionary(aruco_dict_type)
+        self._aruco_parameters = cv2.aruco.DetectorParameters()
+        self._aruco_detector = cv2.aruco.ArucoDetector(self._aruco_dict, self._aruco_parameters)
+        self._camera_params: CameraParams = camera_params
         self.markers: dict[int, Marker] = {}
 
-    def process_detected_markers(self, frame, corners, ids):
+    def process_detected_markers(self, frame, corners: np.ndarray, ids: np.ndarray):
         # process the results
         if len(corners) > 0:
             # flatten the ArUco IDs list
             ids = ids.flatten()
             # loop over the detected ArUCo corners
+            marker_corner: np.ndarray
             for (marker_corner, marker_id) in zip(corners, ids):
                 # extract the marker corners (which are always returned in
                 # top-left, top-right, bottom-right, and bottom-left order)
@@ -74,6 +76,7 @@ class ArucoDetector:
         # process the results
         if len(corners) > 0:
             # loop over the detected ArUCo corners
+            marker_corner: np.ndarray
             for marker_corner in corners:
                 # extract the marker corners (which ar returned in
                 # top-left, top-right, bottom-right, and bottom-left order)
@@ -91,13 +94,33 @@ class ArucoDetector:
                         break
     
     def detect(self, frame: np.ndarray):
-        (corners, ids, rejected) = self.aruco_detector.detectMarkers(frame)
-        
+        (corners, ids, rejected) = self._aruco_detector.detectMarkers(frame)
+
+        # TODO: remove this and implement pose estimation properly
+        self._last_corners = corners
+
         self.process_detected_markers(frame, corners, ids)
         self.process_rejected_markers(frame, rejected)
     
     def draw_markers_on_frame(self, frame: np.ndarray):
         color = COLOR_ACCEPTED
+
+        rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
+            self._last_corners, 
+            0.053, 
+            self._camera_params.matrix, 
+            self._camera_params.distortion
+        )
+        if rvecs is not None and tvecs is not None:
+            for rvec, tvec in zip(rvecs, tvecs):
+                cv2.drawFrameAxes(
+                    frame,
+                    self._camera_params.matrix,
+                    self._camera_params.distortion,
+                    rvec,
+                    tvec,
+                    0.1
+                )
 
         for _, marker in self.markers.items():
             cv2.line(frame, marker.top_left.icart, marker.top_right.icart, color, 2)
