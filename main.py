@@ -140,26 +140,21 @@ def main(args: dict[str, any]) -> int:
         #framebw = cv2.fastNlMeansDenoising(framebw, None, 30, 7, 21)
         framebw = sharpen_image(framebw)
 
-        #detect marcers
+        #detect markers
         detector.detect(framebw)
         detector.draw_markers_on_frame(frame1)
 
         if vid1 is not None:
-            warped = cv2.warpPerspective(frame1, transform_matrix, (400, 400), flags=cv2.INTER_LINEAR)
+            # Geometrical transformation: https://docs.opencv.org/4.x/da/d54/group__imgproc__transform.html
+            warped = cv2.warpPerspective(frame1, transform_matrix, (800, 400), flags=cv2.INTER_LINEAR)
 
-            orig_point = np.array([orig_corners[0].x, orig_corners[0].y, 1])
-            print(orig_point)
-            cv2.circle(frame1, orig_point[0:2], 5, (0, 128, 255))
+            for corner in orig_corners:
+                cv2.drawMarker(frame1, corner.icart, (0, 128, 255), thickness=2)
 
-            # Perspective transform on single coordinate mathematically:
-            # https://forum.opencv.org/t/perspective-transform-on-single-coordinate/733/5
-
-            #goal_point = np.matmul(np.linalg.inv(cv2.invert(transform_matrix)), orig_point)
-            #goal_point = goal_point*(1/goal_point[2])
             # Transform a point: https://stackoverflow.com/questions/31147438/how-to-undo-a-perspective-transform-for-a-single-point-in-opencv
-            goal_point = cv2.perspectiveTransform(np.array([[[100, 150]]], dtype=np.float32), transform_matrix)
-            print(goal_point)
-            cv2.circle(warped, np.int32(goal_point[0][0]), 5, (0, 128, 255))
+            transformed_corners: np.ndarray = cv2.perspectiveTransform(np.array([[v.icart for v in orig_corners]], dtype=np.float32), transform_matrix)
+            for corner in transformed_corners[0]:
+                cv2.drawMarker(warped, np.int32(corner), (0, 255, 0), thickness=2)
 
 
             cv2.imshow("Camera 1", frame1)
