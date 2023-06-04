@@ -10,3 +10,6 @@ class VideoCapture:
     
     def get(prop_id: int) -> float:
         ...
+
+    def isOpened() -> bool:
+        ...

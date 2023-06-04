@@ -65,7 +65,6 @@ class TrackingStream:
         """
 
         self._source_corners = source_corners
-        print(type(source_corners))
         self._dest_corners: np.ndarray = np.float32([
             [0, 0],                                             # tl
             [TRACKER_OUTPUT_SHAPE[0], 0],                       # tr

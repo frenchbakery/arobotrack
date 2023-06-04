@@ -52,38 +52,16 @@ def main(args: dict[str, any]) -> int:
     # start window thread
     app_window = MainWindow()
 
-
     stream1 = TrackingStream(video_arg1)
-
-    # initialize the camera feed
-    #vid1 = video_arg1.open() if video_arg1 is not None else None
-    #vid2 = video_arg2.open() if video_arg2 is not None else None
-
-    orig_corners = (
-        Vec2(100, 150),
-        Vec2(400, 20),
-        Vec2(422, 422),
-        Vec2(100, 300)
-    )
-
-
-    goal_corners = (
-        Vec2(0, 0),
-        Vec2(400, 0),
-        Vec2(400, 400),
-        Vec2(0, 400)
-    )
-
-
-    # Trapezoid transform: https://stackoverflow.com/questions/22037946/fast-trapezoid-to-rectangle-for-video
-    # Another guide for warping image: https://theailearner.com/tag/cv2-getperspectivetransform/
-    transform_matrix = cv2.getPerspectiveTransform(
-        np.float32([v.icart for v in orig_corners]),
-        np.float32([v.icart for v in goal_corners]),
-    )
-
-
-    print(transform_matrix)
+    stream1._configure_source_area(np.float32(
+        [
+            [468, 392],
+            [133, 394],
+            [195, 233],
+            [415, 233]
+        ]
+    ))
+    #stream2 = TrackingStream(video_arg2)
 
     while (True):
         # frame1: cv2.Mat
@@ -168,7 +146,11 @@ def main(args: dict[str, any]) -> int:
         # #app_window.update_video(frame1)
 
         frame1 = stream1.update()
+        #frame2 = stream2.update()
+        both = np.concatenate((frame1, frame2), axis=1)
         cv2.imshow("Camera 1", frame1)
+        #cv2.imshow("Camera 2", frame2)
+        #cv2.imshow("Both", both)
 
         if app_window.update():
             break
