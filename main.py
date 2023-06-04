@@ -7,7 +7,7 @@ import cv2
 import sys
 import numpy as np
 
-from classes.camera import ArucoDetector, CameraDevice,  CameraParams, ARUCO_DICTS
+from classes.camera import ArucoDetector, CameraDevice, CameraParams, TrackingStream, ARUCO_DICTS
 from classes.ui import MainWindow
 from classes.utilities import Vec2
 
@@ -53,9 +53,11 @@ def main(args: dict[str, any]) -> int:
     app_window = MainWindow()
 
 
+    stream1 = TrackingStream(video_arg1)
+
     # initialize the camera feed
-    vid1 = video_arg1.open() if video_arg1 is not None else None
-    vid2 = video_arg2.open() if video_arg2 is not None else None
+    #vid1 = video_arg1.open() if video_arg1 is not None else None
+    #vid2 = video_arg2.open() if video_arg2 is not None else None
 
     orig_corners = (
         Vec2(100, 150),
@@ -73,7 +75,8 @@ def main(args: dict[str, any]) -> int:
     )
 
 
-
+    # Trapezoid transform: https://stackoverflow.com/questions/22037946/fast-trapezoid-to-rectangle-for-video
+    # Another guide for warping image: https://theailearner.com/tag/cv2-getperspectivetransform/
     transform_matrix = cv2.getPerspectiveTransform(
         np.float32([v.icart for v in orig_corners]),
         np.float32([v.icart for v in goal_corners]),
@@ -83,19 +86,19 @@ def main(args: dict[str, any]) -> int:
     print(transform_matrix)
 
     while (True):
-        frame1: cv2.Mat
-        frame2: cv2.Mat
+        # frame1: cv2.Mat
+        # frame2: cv2.Mat
 
-        # read a frame from camera 1
-        if vid1 is not None:
-            _, frame1 = vid1.read()
-            if frame1 is None:
-                continue
-        # read a frame from camera 2
-        if vid2 is not None:
-            _, frame2 = vid2.read()
-            if frame2 is None:
-                continue
+        # # read a frame from camera 1
+        # if vid1 is not None:
+        #     _, frame1 = vid1.read()
+        #     if frame1 is None:
+        #         continue
+        # # read a frame from camera 2
+        # if vid2 is not None:
+        #     _, frame2 = vid2.read()
+        #     if frame2 is None:
+        #         continue
 
         # exit key
         if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -135,34 +138,37 @@ def main(args: dict[str, any]) -> int:
             )
         """
 
-        framebw = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-        #_, framebw = cv2.threshold(framebw, 127, 255, cv2.THRESH_BINARY)
-        #framebw = cv2.fastNlMeansDenoising(framebw, None, 30, 7, 21)
-        framebw = sharpen_image(framebw)
+        # framebw = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+        # #_, framebw = cv2.threshold(framebw, 127, 255, cv2.THRESH_BINARY)
+        # #framebw = cv2.fastNlMeansDenoising(framebw, None, 30, 7, 21)
+        # framebw = sharpen_image(framebw)
 
-        #detect markers
-        detector.detect(framebw)
-        detector.draw_markers_on_frame(frame1)
+        # #detect markers
+        # detector.detect(framebw)
+        # detector.draw_markers_on_frame(frame1)
 
-        if vid1 is not None:
-            # Geometrical transformation: https://docs.opencv.org/4.x/da/d54/group__imgproc__transform.html
-            warped = cv2.warpPerspective(frame1, transform_matrix, (800, 400), flags=cv2.INTER_LINEAR)
+        # if vid1 is not None:
+        #     # Geometrical transformation: https://docs.opencv.org/4.x/da/d54/group__imgproc__transform.html
+        #     warped = cv2.warpPerspective(frame1, transform_matrix, (800, 400), flags=cv2.INTER_LINEAR)
 
-            for corner in orig_corners:
-                cv2.drawMarker(frame1, corner.icart, (0, 128, 255), thickness=2)
+        #     for corner in orig_corners:
+        #         cv2.drawMarker(frame1, corner.icart, (0, 128, 255), thickness=2)
 
-            # Transform a point: https://stackoverflow.com/questions/31147438/how-to-undo-a-perspective-transform-for-a-single-point-in-opencv
-            transformed_corners: np.ndarray = cv2.perspectiveTransform(np.array([[v.icart for v in orig_corners]], dtype=np.float32), transform_matrix)
-            for corner in transformed_corners[0]:
-                cv2.drawMarker(warped, np.int32(corner), (0, 255, 0), thickness=2)
+        #     # Transform a point: https://stackoverflow.com/questions/31147438/how-to-undo-a-perspective-transform-for-a-single-point-in-opencv
+        #     transformed_corners: np.ndarray = cv2.perspectiveTransform(np.array([[v.icart for v in orig_corners]], dtype=np.float32), transform_matrix)
+        #     for corner in transformed_corners[0]:
+        #         cv2.drawMarker(warped, np.int32(corner), (0, 255, 0), thickness=2)
 
 
-            cv2.imshow("Camera 1", frame1)
-            cv2.imshow("Warped Camera 1", warped)
+        #     cv2.imshow("Camera 1", frame1)
+        #     cv2.imshow("Warped Camera 1", warped)
 
-        if vid2 is not None:
-            cv2.imshow("Camera 2", frame2)
-        #app_window.update_video(frame1)
+        # if vid2 is not None:
+        #     cv2.imshow("Camera 2", frame2)
+        # #app_window.update_video(frame1)
+
+        frame1 = stream1.update()
+        cv2.imshow("Camera 1", frame1)
 
         if app_window.update():
             break
@@ -174,7 +180,7 @@ def main(args: dict[str, any]) -> int:
 
 def get_args():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-v1", "--video1", required=False,
+    ap.add_argument("-v1", "--video1", required=False, default=0,
                     help="Video ID for live tracking")
     ap.add_argument("-v2", "--video2", required=False,
                     help="Video ID for live tracking")

@@ -7,3 +7,6 @@ import cv2
 class VideoCapture:
     def read() -> cv2.Mat:
         ...
+    
+    def get(prop_id: int) -> float:
+        ...
